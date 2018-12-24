@@ -1,0 +1,7 @@
+Requires:
+	- https://github.com/fdinoff/neovim-java-client/
+	  => jackson-dataformat-msgpack-*.jar
+	     msgpack-core-*.jar
+		 neovim-java-client.jar
+	- https://github.com/UncleSniper/jogdl/
+	  => ogdl.jar

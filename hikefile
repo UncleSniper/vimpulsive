@@ -1,0 +1,89 @@
+projectName "vimpulsive"
+
+artifact directory "src" "src"
+artifact directory "bin" { "bin" mkdir }
+
+artifact tree "libs" {
+	"lib"
+	name "libs"
+	files
+	wildcard "*.jar"
+}
+
+artifact pipeline {
+	key "distlibs"
+	scandir {
+		"lib"
+		files
+		wildcard "*.jar"
+	}
+	regex {
+		"$" ""
+		rebaseFrom "lib"
+		rebaseTo "dist/lib"
+		copy
+	}
+}
+
+artifact artifacts "classpath" {
+	name "build classpath"
+	"bin"
+	"libs"
+}
+
+artifact pipeline {
+	key "classes"
+	scandir {
+		"src"
+		files
+		wildcard "*.java"
+		not wildcard "package-info.java"
+	}
+	regex {
+		"\\.java$" ".class"
+		rebaseFrom "src"
+		rebaseTo "bin"
+		exec "compile" {
+			"javac"
+				"-cp" aux "classpath" merge
+				"-d" aux "bin"
+				"-sourcepath" aux "src"
+				source
+			loud
+		}
+	}
+}
+
+artifact split "genClasses" {
+	"classes"
+	tree "actualClasses" {
+		"bin"
+		files
+		wildcard "*.class"
+	}
+}
+
+artifact file "jar" {
+	"dist/vimpulsive.jar"
+	zip {
+		piece {
+			from "bin"
+			"genClasses"
+		}
+		piece {
+			to "META-INF"
+			rename "manifest.mf" "MANIFEST.MF"
+			file "manifest" "manifest.mf"
+		}
+	}
+}
+
+goal build {
+	require "jar"
+	require "distlibs"
+}
+
+goal clean {
+	delete "bin"
+	delete "dist"
+}
