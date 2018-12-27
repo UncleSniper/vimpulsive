@@ -1,7 +1,13 @@
 Requires:
 	- https://github.com/fdinoff/neovim-java-client/
 	  => jackson-dataformat-msgpack-*.jar
+	     jackson-databind-*.jar
+	     jackson-core-*.jar
 	     msgpack-core-*.jar
 		 neovim-java-client.jar
+	     slf4j-api-*.jar
+	     slf4j-nop-*.jar ("or other" is what it'd like to say, but you don't understand how logging works)
+	     jackson-annotations-*.jar
+	     guava-*.jar
 	- https://github.com/UncleSniper/jogdl/
 	  => ogdl.jar
