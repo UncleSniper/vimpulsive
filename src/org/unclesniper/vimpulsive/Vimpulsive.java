@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.unclesniper.ogdl.Injection;
 import com.neovim.msgpack.MessagePackRPC;
 import org.unclesniper.ogdl.ClassRegistry;
+import java.util.concurrent.atomic.AtomicLong;
 import org.unclesniper.vimpulsive.boot.Bootstrap;
 import org.unclesniper.ogdl.ObjectDescriptionException;
 
@@ -12,22 +13,22 @@ public class Vimpulsive {
 
 	public static class Handler extends Thread {
 
-		private final Vimpulsive server;
-
 		private final VimSession session;
 
-		public Handler(Vimpulsive server, VimSession session) {
-			this.server = server;
+		public Handler(VimSession session) {
 			this.session = session;
 		}
 
 		public void run() {
 			try(VimSession s = session) {
 				s.waitForFinish();
-				server.fireSessionDying(session);
+				s.fireSessionEnding();
 			}
 			catch(IOException ioe) {
 				ioe.printStackTrace();
+			}
+			finally {
+				session.getServer().fireSessionDying(session);
 			}
 		}
 
@@ -37,6 +38,8 @@ public class Vimpulsive {
 
 	private final Listeners<SessionConnectionListener> sessionConnectionListeners
 			= new Listeners<SessionConnectionListener>();
+
+	private final AtomicLong nextSessionID = new AtomicLong();
 
 	public Vimpulsive() {}
 
@@ -67,10 +70,10 @@ public class Vimpulsive {
 	}
 
 	private void handleConnection(MessagePackRPC.Connection connection) {
-		VimSession session = new VimSession(Neovim.connectTo(connection));
+		VimSession session = new VimSession(this, Neovim.connectTo(connection), nextSessionID.getAndIncrement());
 		session.echom("Vimpulsive at your beck and call.");
 		fireSessionConnected(session);
-		new Handler(this, session).start();
+		new Handler(session).start();
 	}
 
 	public void addService(VimService service) {
@@ -88,12 +91,12 @@ public class Vimpulsive {
 
 	private void fireSessionConnected(VimSession session) {
 		sessionConnectionListeners.fire(SessionConnectionListener::sessionConnected,
-				new SessionConnectionEvent(this, session));
+				new SessionConnectionEvent(session));
 	}
 
 	private void fireSessionDying(VimSession session) {
 		sessionConnectionListeners.fire(SessionConnectionListener::sessionDying,
-				new SessionConnectionEvent(this, session));
+				new SessionConnectionEvent(session));
 	}
 
 }

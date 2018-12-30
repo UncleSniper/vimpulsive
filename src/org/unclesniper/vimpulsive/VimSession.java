@@ -9,18 +9,35 @@ import java.io.IOException;
 
 public class VimSession implements AutoCloseable {
 
+	private final Vimpulsive server;
+
 	private final Neovim binding;
 
 	private final Set<Object> hooks = new HashSet<Object>();
 
 	private final Map<Class<?>, Object> attributes = new HashMap<Class<?>, Object>();
 
-	public VimSession(Neovim binding) {
+	private final Listeners<SessionLifecycleListener> sessionLifecycleListeners
+			= new Listeners<SessionLifecycleListener>();
+
+	private final long sessionID;
+
+	public VimSession(Vimpulsive server, Neovim binding, long sessionID) {
+		this.server = server;
 		this.binding = binding;
+		this.sessionID = sessionID;
+	}
+
+	public Vimpulsive getServer() {
+		return server;
 	}
 
 	public Neovim getBinding() {
 		return binding;
+	}
+
+	public long getSessionID() {
+		return sessionID;
 	}
 
 	public void addHook(Object hook) {
@@ -69,6 +86,18 @@ public class VimSession implements AutoCloseable {
 		if(key == null)
 			return null;
 		return key.cast(attributes.get(key));
+	}
+
+	public void addSessionLifecycleListener(SessionLifecycleListener listener) {
+		sessionLifecycleListeners.add(listener);
+	}
+
+	public void removeSessionLifecycleListener(SessionLifecycleListener listener) {
+		sessionLifecycleListeners.remove(listener);
+	}
+
+	void fireSessionEnding() {
+		sessionLifecycleListeners.fire(SessionLifecycleListener::sessionEnding, new SessionLifecycleEvent(this));
 	}
 
 	public void echo(String message) {

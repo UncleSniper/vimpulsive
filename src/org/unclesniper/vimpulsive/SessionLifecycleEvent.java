@@ -1,14 +1,10 @@
 package org.unclesniper.vimpulsive;
 
-public class SessionConnectionEvent extends VimEvent {
+public class SessionLifecycleEvent extends VimEvent {
 
 	private VimSession session;
 
-	public SessionConnectionEvent(Vimpulsive server) {
-		super(server);
-	}
-
-	public SessionConnectionEvent(VimSession session) {
+	public SessionLifecycleEvent(VimSession session) {
 		super(session.getServer());
 		this.session = session;
 	}
